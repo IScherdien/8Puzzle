@@ -10,14 +10,14 @@ class Node:
         self.action = action
 
 class Tabuleiro:
-    def __init__(self,lado):
+    def __init__(self, lado):
         self.lado = lado
         self.inicializa_tabuleiro()
         self.movimentos = {'cima': self.mover_cima, 'baixo': self.mover_baixo, 'direita': self.mover_direita, 'esquerda': self.mover_esquerda}
 
     def inicializa_tabuleiro(self):
-        self.tabuleiro = np.arange(1,self.lado*self.lado+1)
-        self.tabuleiro = np.reshape(self.tabuleiro,(self.lado,self.lado))
+        self.tabuleiro = np.arange(1, self.lado*self.lado+1)
+        self.tabuleiro = np.reshape(self.tabuleiro, (self.lado, self.lado))
         self.tabuleiro[-1][-1] = 0
         self.x = self.lado - 1
         self.y = self.lado - 1
@@ -31,53 +31,53 @@ class Tabuleiro:
         if self.pode_subir():
             print(f'para cima: {self.x}{self.y-1}')
             self.troca(self.x, self.y-1)
-            self.y = self.y - 1;
+            self.y = self.y - 1
             return True
         return False
 
     def mover_baixo(self):
         if self.pode_descer():
             self.troca(self.x, self.y + 1)
-            self.y = self.y + 1;
+            self.y = self.y + 1
             return True
         return False
 
     def mover_direita(self):
         if self.pode_direita():
             self.troca(self.x + 1, self.y)
-            self.x = self.x + 1;
+            self.x = self.x + 1
             return True
         return False
 
     def mover_esquerda(self):
         if self.pode_esquerda():
             self.troca(self.x - 1, self.y)
-            self.x = self.x - 1;
+            self.x = self.x - 1
             return True
         return False
 
     def movimentos_possiveis(self):
         lista_movimentos = []
         lista_acoes = []
-        # pra cima
+        # para cima
         if self.pode_subir():
             novo_y = self.y - 1
             lista_movimentos.append((self.x, novo_y))
             lista_acoes.append('cima')
 
-        # pra baixo
+        # para baixo
         if self.pode_descer():
             novo_y = self.y + 1
             lista_movimentos.append((self.x, novo_y))
             lista_acoes.append('baixo')
 
-        # pra direita
+        # para direita
         if self.pode_direita():
             novo_x = self.x + 1
-            lista_movimentos.append((novo_x, self.y,))
+            lista_movimentos.append((novo_x, self.y))
             lista_acoes.append('direita')
 
-        # pra esquerda
+        # para esquerda
         if self.pode_esquerda():
             novo_x = self.x - 1
             lista_movimentos.append((novo_x, self.y))
@@ -116,7 +116,7 @@ class Tabuleiro:
         print(self.tabuleiro)
 
 
-class QuebraCabeça:
+class QuebraCabeca:
     tamanho = 5
     def __init__(self, tam):
         self.tamanho = tam
@@ -126,12 +126,12 @@ class QuebraCabeça:
         self.tabuleiro.print_pos()
 
         self.num_moves = num_moves
-        movements = tabuleiro.movimentos
-        for move in range(num_moves):
-            possible = tabuleiro.movimentos_possiveis()[1]
+        movements = self.tabuleiro.movimentos
+        for _ in range(num_moves):
+            possible = self.tabuleiro.movimentos_possiveis()[1]
             move = random.choice(possible)
             print(f'selected move {move}')
-            movementsrandom.choice(possible)
+            movements[move]()
         self.tabuleiro.print_tabuleiro()
 
 def bfs(initial, goal_test):
@@ -142,11 +142,11 @@ def bfs(initial, goal_test):
         current_node = frontier.pop(0)
         current_state = current_node.state
 
-        if goal_test(current_state):
+        if goal_test(current_state.state):  # Correção aqui
             return current_node
 
         for action in current_state.movimentos_possiveis()[1]:
-            child = current_state.movimentosaction
+            child = current_state.movimentos[action]()
             if child not in explored:
                 explored.add(child)
                 frontier.append(Node(child, current_node, action))
@@ -161,11 +161,11 @@ def dfs(initial, goal_test):
         current_node = frontier.pop()
         current_state = current_node.state
 
-        if goal_test(current_state):
+        if goal_test(current_state.tabuleiro):  # Ajuste aqui
             return current_node
 
         for action in current_state.movimentos_possiveis()[1]:
-            child = current_state.movimentosaction
+            child = current_state.movimentos[action]()
             if child not in explored:
                 explored.add(child)
                 frontier.append(Node(child, current_node, action))
@@ -174,14 +174,14 @@ def dfs(initial, goal_test):
 
 def dls(initial, goal_test, limit=50):
     def recursive_dls(node, goal_test, limit):
-        if goal_test(node.state):
+        if goal_test(node.state.tabuleiro):  # Ajuste aqui
             return node
         elif limit == 0:
             return 'cutoff'
         else:
             cutoff_occurred = False
             for action in node.state.movimentos_possiveis()[1]:
-                child = node.state.movimentosaction
+                child = node.state.movimentos[action]()
                 result = recursive_dls(Node(child, node, action), goal_test, limit - 1)
                 if result == 'cutoff':
                     cutoff_occurred = True
@@ -190,6 +190,27 @@ def dls(initial, goal_test, limit=50):
             return 'cutoff' if cutoff_occurred else None
 
     return recursive_dls(Node(initial, None, None), goal_test, limit)
+
+def ids(initial, goal_test):
+    def dls(node, goal_test, limit):
+        if goal_test(node.state.tabuleiro):  # Ajuste aqui
+            return node
+        elif limit == 0:
+            return None
+        else:
+            for action in node.state.movimentos_possiveis()[1]:
+                child = node.state.movimentos[action]()
+                result = dls(Node(child, node, action), goal_test, limit - 1)
+                if result is not None:
+                    return result
+        return None
+
+    for depth in range(5):  # Valor máximo de profundidade conforme necessário
+        result = dls(Node(initial, None, None), goal_test, depth)
+        if result is not None:
+            return result
+
+    return None
 
 def gbsf(initial, goal_test, heuristic):
     frontier = [(heuristic(initial), Node(initial, None, None))]
@@ -200,13 +221,78 @@ def gbsf(initial, goal_test, heuristic):
         frontier.remove((_, current_node))
         current_state = current_node.state
 
-        if goal_test(current_state):
+        if goal_test(current_state.tabuleiro):  # Ajuste aqui
             return current_node
 
         for action in current_state.movimentos_possiveis()[1]:
-            child = current_state.movimentosaction
+            child = current_state.movimentos[action]()
             if child not in explored:
                 explored.add(child)
                 frontier.append((heuristic(child), Node(child, current_node, action)))
 
     return None
+
+
+def print_menu():
+    print("Escolha o algoritmo que você deseja usar:")
+    print("1. Busca em Largura (BFS)")
+    print("2. Busca em Profundidade (DFS)")
+    print("3. Busca em Profundidade Limitada (DLS)")
+    print("4. Busca em Profundidade Iterativa (IDS)")
+
+def print_tabuleiro(tabuleiro):
+    for linha in tabuleiro:
+        print(' '.join(str(celula) for celula in linha))
+
+def main():
+    quebra_cabeca = QuebraCabeca(5)
+    quebra_cabeca.aleatoriza(10)
+
+    print_menu()
+    escolha = input("Digite o número do algoritmo que você deseja usar: ")
+
+    # Estado inicial para o algoritmo de busca
+    estado_inicial = Tabuleiro(quebra_cabeca.tamanho)
+    estado_inicial.tabuleiro = np.copy(quebra_cabeca.tabuleiro.tabuleiro)
+    estado_inicial.x = quebra_cabeca.tabuleiro.x
+    estado_inicial.y = quebra_cabeca.tabuleiro.y
+
+    # Definição da função goal_test
+    def goal_test(state):
+        tamanho = state.shape[0]  # Calcula o tamanho do tabuleiro a partir do array numpy
+        objetivo = np.arange(1, tamanho * tamanho + 1).reshape((tamanho, tamanho))
+        return np.array_equal(state, objetivo)
+
+    match escolha:
+        case '1':
+            print("Você escolheu BFS.")
+            resultado = bfs(estado_inicial, goal_test)
+        case '2':
+            print("Você escolheu DFS.")
+            resultado = dfs(estado_inicial, goal_test)
+        case '3':
+            print("Você escolheu DLS.")
+            resultado = dls(estado_inicial, goal_test)
+        case '4':
+            print("Você escolheu IDS.")
+            resultado = ids(estado_inicial, goal_test)
+        case _:
+            print("Escolha inválida.")
+            return
+
+    if resultado is not None:
+        print("Solução encontrada!")
+        node = resultado
+        path = []
+        while node:
+            path.append(node.state)
+            node = node.parent
+        path.reverse()
+        for state in path:
+            print_tabuleiro(state.tabuleiro)
+            print("\n")
+    else:
+        print("Nenhuma solução encontrada.")
+
+if __name__ == "__main__":
+    main()

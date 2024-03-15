@@ -232,6 +232,25 @@ def gbsf(initial, goal_test, heuristic):
 
     return None
 
+def a_star(initial, goal_test, heuristic):
+    frontier = [(heuristic(initial), Node(initial, None, None))]
+    explored = {initial}
+
+    while frontier:
+        _, current_node = min(frontier, key=lambda x: x[0])
+        frontier.remove((_, current_node))
+        current_state = current_node.state
+
+        if goal_test(current_state):
+            return current_node
+
+        for action in current_state.movimentos_possiveis()[1]:
+            child = current_state.movimentosaction
+            if child not in explored:
+                explored.add(child)
+                frontier.append((heuristic(child), Node(child, current_node, action)))
+
+    return None
 
 def print_menu():
     print("Escolha o algoritmo que você deseja usar:")
@@ -239,6 +258,7 @@ def print_menu():
     print("2. Busca em Profundidade (DFS)")
     print("3. Busca em Profundidade Limitada (DLS)")
     print("4. Busca em Profundidade Iterativa (IDS)")
+    print("5. Busca Heurística (A*)")
 
 def print_tabuleiro(tabuleiro):
     for linha in tabuleiro:
@@ -276,6 +296,9 @@ def main():
         case '4':
             print("Você escolheu IDS.")
             resultado = ids(estado_inicial, goal_test)
+        case '5':
+            print("Você escolheu A*.")
+            resultado = a_star(estado_inicial, goal_test)
         case _:
             print("Escolha inválida.")
             return
